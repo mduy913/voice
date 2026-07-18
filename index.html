@@ -50,7 +50,6 @@
         .header h1 {
             font-size: 32px;
             color: #333;
-            margin-bottom: 8px;
         }
 
         .header h1 span {
@@ -64,6 +63,87 @@
             font-size: 16px;
         }
 
+        /* Token Section */
+        .token-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+            transition: border-color 0.3s;
+        }
+
+        .token-section.valid {
+            border-color: #00b894;
+        }
+
+        .token-section.invalid {
+            border-color: #ff6b6b;
+        }
+
+        .token-section label {
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .token-section .token-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .token-section input[type="text"] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: monospace;
+            transition: border-color 0.3s;
+        }
+
+        .token-section input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .token-section .btn-verify {
+            padding: 10px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .token-section .btn-verify:hover {
+            background: #5a6fd6;
+            transform: translateY(-1px);
+        }
+
+        .token-status {
+            margin-top: 8px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .token-status.show {
+            display: block;
+        }
+
+        .token-status.success {
+            color: #00b894;
+        }
+
+        .token-status.error {
+            color: #ff6b6b;
+        }
+
+        /* Drop Zone */
         .drop-zone {
             border: 3px dashed #ddd;
             border-radius: 15px;
@@ -84,6 +164,11 @@
             border-color: #667eea;
             background: #e8e8ff;
             transform: scale(1.02);
+        }
+
+        .drop-zone.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .drop-zone .icon {
@@ -112,6 +197,11 @@
             cursor: pointer;
         }
 
+        .drop-zone.disabled input[type="file"] {
+            cursor: not-allowed;
+        }
+
+        /* File Info */
         .file-info {
             display: none;
             background: #f0f4ff;
@@ -171,34 +261,7 @@
             transform: scale(1.2);
         }
 
-        .options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .options label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .options select {
-            width: 100%;
-            padding: 10px 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-            background: white;
-        }
-
-        .options select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
+        /* Video Preview */
         .video-preview {
             display: none;
             margin-top: 20px;
@@ -217,6 +280,7 @@
             display: block;
         }
 
+        /* Buttons */
         .btn {
             width: 100%;
             padding: 16px;
@@ -244,16 +308,6 @@
             cursor: not-allowed;
         }
 
-        .btn-danger {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-        }
-
-        .btn-danger:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
-        }
-
         .btn-success {
             background: linear-gradient(135deg, #00b894, #00a86b);
             color: white;
@@ -275,17 +329,7 @@
             color: white;
         }
 
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .btn-group .btn {
-            flex: 1;
-            margin-top: 0;
-        }
-
+        /* Progress */
         .progress-container {
             display: none;
             margin-top: 20px;
@@ -338,6 +382,7 @@
             }
         }
 
+        /* Result */
         .result-container {
             display: none;
             margin-top: 25px;
@@ -410,6 +455,38 @@
             margin-top: 0;
         }
 
+        /* Status */
+        .status-msg {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .status-msg.show {
+            display: block;
+        }
+
+        .status-msg.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-msg.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-msg.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Supported formats */
         .supported-formats {
             display: flex;
             flex-wrap: wrap;
@@ -427,36 +504,7 @@
             font-weight: 600;
         }
 
-        .status-msg {
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-top: 15px;
-            display: none;
-            font-size: 14px;
-        }
-
-        .status-msg.show {
-            display: block;
-        }
-
-        .status-msg.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .status-msg.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-msg.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
+        /* Responsive */
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -464,10 +512,6 @@
 
             .header h1 {
                 font-size: 24px;
-            }
-
-            .options {
-                grid-template-columns: 1fr;
             }
 
             .drop-zone {
@@ -482,7 +526,7 @@
                 flex-direction: column;
             }
 
-            .btn-group {
+            .token-section .token-input-group {
                 flex-direction: column;
             }
         }
@@ -493,25 +537,37 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🎤 <span>Video To Text</span></h1>
-            <p>Chuyển đổi video/audio thành văn bản - Hoàn toàn offline</p>
+            <h1>🎤 <span>Tách Lời Video</span></h1>
+            <p>Chuyển đổi video/audio thành văn bản</p>
         </div>
+
+        <!-- Token Section -->
+        <div class="token-section" id="tokenSection">
+            <label>🔑 Mã Token</label>
+            <div class="token-input-group">
+                <input type="text" id="tokenInput" placeholder="Nhập token...">
+                <button class="btn-verify" id="verifyBtn">✅ Xác thực</button>
+            </div>
+            <div class="token-status" id="tokenStatus"></div>
+        </div>
+
+        <!-- Status Message -->
+        <div class="status-msg" id="statusMsg"></div>
 
         <!-- Drop Zone -->
         <div class="drop-zone" id="dropZone">
             <div class="icon">📁</div>
             <div class="text"><strong>Chọn file video hoặc audio</strong></div>
-            <div class="sub-text">Kéo thả hoặc click để chọn (MP4, AVI, MOV, MKV, WEBM, MP3, WAV, M4A)</div>
+            <div class="sub-text">Kéo thả hoặc click để chọn</div>
             <input type="file" id="fileInput" accept=".mp4,.avi,.mov,.mkv,.webm,.m4v,.mp3,.wav,.m4a,.ogg">
         </div>
 
         <!-- File Info -->
         <div class="file-info" id="fileInfo">
-            <div class="file-icon" id="fileIcon">🎬</div>
+            <div class="file-icon">🎬</div>
             <div class="file-details">
                 <div class="file-name" id="fileName">video.mp4</div>
                 <div class="file-size" id="fileSize">15 MB</div>
-                <div style="font-size:12px;color:#999;margin-top:2px;" id="fileDuration"></div>
             </div>
             <button class="remove-btn" id="removeFile">✕</button>
         </div>
@@ -521,47 +577,8 @@
             <video id="videoPlayer" controls></video>
         </div>
 
-        <!-- Options -->
-        <div class="options">
-            <div>
-                <label>🌍 Ngôn ngữ</label>
-                <select id="languageSelect">
-                    <option value="vi-VN">Tiếng Việt</option>
-                    <option value="en-US">English (US)</option>
-                    <option value="en-GB">English (UK)</option>
-                    <option value="zh-CN">中文 (简体)</option>
-                    <option value="zh-TW">中文 (繁體)</option>
-                    <option value="ja-JP">日本語</option>
-                    <option value="ko-KR">한국어</option>
-                    <option value="fr-FR">Français</option>
-                    <option value="de-DE">Deutsch</option>
-                    <option value="es-ES">Español</option>
-                    <option value="ru-RU">Русский</option>
-                    <option value="th-TH">ไทย</option>
-                    <option value="id-ID">Bahasa Indonesia</option>
-                    <option value="auto">🔁 Tự động</option>
-                </select>
-            </div>
-            <div>
-                <label>⏱️ Thời gian</label>
-                <select id="durationSelect">
-                    <option value="full">Toàn bộ video</option>
-                    <option value="30">30 giây</option>
-                    <option value="60">1 phút</option>
-                    <option value="120">2 phút</option>
-                    <option value="300">5 phút</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Status Message -->
-        <div class="status-msg" id="statusMsg"></div>
-
-        <!-- Buttons -->
-        <div class="btn-group">
-            <button class="btn btn-primary" id="processBtn" disabled>🎤 Bắt đầu tách lời</button>
-            <button class="btn btn-danger" id="stopBtn" disabled>⏹️ Dừng</button>
-        </div>
+        <!-- Process Button -->
+        <button class="btn btn-primary" id="processBtn" disabled>🚀 Bắt đầu tách lời</button>
 
         <!-- Progress -->
         <div class="progress-container" id="progressContainer">
@@ -604,18 +621,25 @@
 
     <script>
         // ============================================
+        // CONFIG
+        // ============================================
+        const API_URL = 'http://localhost:5000';
+
+        // ============================================
         // DOM Elements
         // ============================================
+        const tokenSection = document.getElementById('tokenSection');
+        const tokenInput = document.getElementById('tokenInput');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const tokenStatus = document.getElementById('tokenStatus');
+
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const fileInfo = document.getElementById('fileInfo');
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
-        const fileDuration = document.getElementById('fileDuration');
-        const fileIcon = document.getElementById('fileIcon');
         const removeFile = document.getElementById('removeFile');
         const processBtn = document.getElementById('processBtn');
-        const stopBtn = document.getElementById('stopBtn');
         const progressContainer = document.getElementById('progressContainer');
         const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
@@ -626,20 +650,84 @@
         const copyBtn = document.getElementById('copyBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const newBtn = document.getElementById('newBtn');
-        const languageSelect = document.getElementById('languageSelect');
-        const durationSelect = document.getElementById('durationSelect');
+        const statusMsg = document.getElementById('statusMsg');
         const videoPreview = document.getElementById('videoPreview');
         const videoPlayer = document.getElementById('videoPlayer');
-        const statusMsg = document.getElementById('statusMsg');
 
         let selectedFile = null;
         let isProcessing = false;
-        let isStopped = false;
-        let recognition = null;
-        let transcript = '';
-        let audioContext = null;
-        let source = null;
-        let processor = null;
+        let tokenValid = false;
+
+        // ============================================
+        // TOKEN HANDLING
+        // ============================================
+        async function verifyToken(token) {
+            try {
+                const response = await fetch(`${API_URL}/verify_token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                });
+                const data = await response.json();
+                return data.valid || false;
+            } catch (error) {
+                console.error('Lỗi verify token:', error);
+                return false;
+            }
+        }
+
+        verifyBtn.addEventListener('click', async () => {
+            const token = tokenInput.value.trim();
+            if (!token) {
+                showTokenStatus('⚠️ Vui lòng nhập token!', 'error');
+                return;
+            }
+
+            verifyBtn.textContent = '⏳ Đang kiểm tra...';
+            verifyBtn.disabled = true;
+
+            const valid = await verifyToken(token);
+
+            if (valid) {
+                tokenValid = true;
+                tokenSection.className = 'token-section valid';
+                showTokenStatus('✅ Token hợp lệ!', 'success');
+                processBtn.disabled = false;
+                dropZone.classList.remove('disabled');
+                showStatus('✅ Token hợp lệ! Bạn có thể sử dụng.', 'success');
+            } else {
+                tokenValid = false;
+                tokenSection.className = 'token-section invalid';
+                showTokenStatus('❌ Token không hợp lệ!', 'error');
+                processBtn.disabled = true;
+                dropZone.classList.add('disabled');
+                showStatus('❌ Token không hợp lệ!', 'error');
+            }
+
+            verifyBtn.textContent = '✅ Xác thực';
+            verifyBtn.disabled = false;
+        });
+
+        tokenInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyBtn.click();
+        });
+
+        function showTokenStatus(message, type) {
+            tokenStatus.textContent = message;
+            tokenStatus.className = 'token-status show ' + type;
+        }
+
+        // ============================================
+        // STATUS
+        // ============================================
+        function showStatus(message, type = 'info') {
+            statusMsg.textContent = message;
+            statusMsg.className = 'status-msg show ' + type;
+        }
+
+        function hideStatus() {
+            statusMsg.className = 'status-msg';
+        }
 
         // ============================================
         // FILE HANDLING
@@ -649,16 +737,6 @@
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
             if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
             return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
-        }
-
-        function formatTime(seconds) {
-            if (!seconds || isNaN(seconds)) return '';
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            if (mins > 0) {
-                return `${mins} phút ${secs} giây`;
-            }
-            return `${secs} giây`;
         }
 
         function getFileIcon(filename) {
@@ -691,24 +769,25 @@
             dropZone.style.display = 'none';
             resultContainer.classList.remove('show');
             progressContainer.classList.remove('show');
+            hideStatus();
 
             // Preview video
             const url = URL.createObjectURL(file);
             videoPlayer.src = url;
             videoPreview.classList.add('show');
 
-            videoPlayer.onloadedmetadata = function() {
-                const duration = videoPlayer.duration;
-                if (duration && !isNaN(duration)) {
-                    fileDuration.textContent = '⏱️ ' + formatTime(duration);
-                }
-            };
-
-            processBtn.disabled = false;
-            hideStatus();
+            if (tokenValid) {
+                processBtn.disabled = false;
+            }
         }
 
-        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', () => {
+            if (!tokenValid) {
+                showStatus('⚠️ Vui lòng xác thực token trước!', 'error');
+                return;
+            }
+            fileInput.click();
+        });
 
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) handleFile(e.target.files[0]);
@@ -716,7 +795,7 @@
 
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropZone.classList.add('dragover');
+            if (tokenValid) dropZone.classList.add('dragover');
         });
 
         dropZone.addEventListener('dragleave', () => {
@@ -726,6 +805,10 @@
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('dragover');
+            if (!tokenValid) {
+                showStatus('⚠️ Vui lòng xác thực token trước!', 'error');
+                return;
+            }
             if (e.dataTransfer.files.length > 0) {
                 handleFile(e.dataTransfer.files[0]);
             }
@@ -745,196 +828,60 @@
         });
 
         // ============================================
-        // STATUS MESSAGE
-        // ============================================
-        function showStatus(message, type = 'info') {
-            statusMsg.textContent = message;
-            statusMsg.className = 'status-msg show ' + type;
-        }
-
-        function hideStatus() {
-            statusMsg.className = 'status-msg';
-        }
-
-        // ============================================
-        // SPEECH RECOGNITION
-        // ============================================
-        function startRecognition() {
-            return new Promise((resolve, reject) => {
-                const lang = languageSelect.value;
-                const maxDuration = parseInt(durationSelect.value);
-
-                // Kiểm tra hỗ trợ Web Speech API
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    reject(new Error('❌ Trình duyệt không hỗ trợ Speech Recognition!\nVui lòng dùng Chrome, Edge, hoặc Safari.'));
-                    return;
-                }
-
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-
-                recognition.lang = lang === 'auto' ? 'vi-VN' : lang;
-                recognition.continuous = true;
-                recognition.interimResults = true;
-                recognition.maxAlternatives = 1;
-
-                transcript = '';
-                let finalTranscript = '';
-                let startTime = Date.now();
-                let isFinal = false;
-
-                recognition.onresult = function(event) {
-                    let interimTranscript = '';
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        const transcriptPart = event.results[i][0].transcript;
-                        if (event.results[i].isFinal) {
-                            finalTranscript += transcriptPart + ' ';
-                        } else {
-                            interimTranscript += transcriptPart;
-                        }
-                    }
-
-                    transcript = finalTranscript + interimTranscript;
-                    resultText.textContent = transcript;
-
-                    const words = transcript.trim() ? transcript.split(/\s+/).length : 0;
-                    wordCount.textContent = words + ' từ';
-
-                    // Update progress
-                    const elapsed = (Date.now() - startTime) / 1000;
-                    const progress = Math.min((elapsed / 60) * 100, 95);
-                    progressFill.style.width = progress + '%';
-                    progressText.textContent = `⏳ Đang nhận dạng... (${Math.floor(elapsed)}s)`;
-
-                    // Kiểm tra thời gian
-                    if (maxDuration !== 'full' && elapsed >= maxDuration) {
-                        isFinal = true;
-                        recognition.stop();
-                    }
-                };
-
-                recognition.onerror = function(event) {
-                    if (event.error === 'not-allowed') {
-                        reject(new Error('❌ Không có quyền truy cập microphone!\nVui lòng cho phép quyền microphone.'));
-                    } else if (event.error === 'no-speech') {
-                        // Không có giọng nói, tiếp tục
-                    } else if (event.error === 'audio-capture') {
-                        reject(new Error('❌ Không tìm thấy microphone!\nVui lòng kiểm tra microphone.'));
-                    } else if (!isFinal) {
-                        reject(new Error('❌ Lỗi: ' + event.error));
-                    }
-                };
-
-                recognition.onend = function() {
-                    if (!isStopped) {
-                        resolve(transcript);
-                    }
-                };
-
-                // Bắt đầu nhận dạng
-                recognition.start();
-                showStatus('🎤 Đang lắng nghe... Hãy phát video có tiếng.', 'info');
-                progressContainer.classList.add('show');
-                progressFill.style.width = '0%';
-                progressText.textContent = '🎤 Đang lắng nghe...';
-                spinner.style.display = 'inline-block';
-                processBtn.disabled = true;
-                stopBtn.disabled = false;
-
-                // Tự động dừng sau 60 giây nếu không có âm thanh
-                setTimeout(() => {
-                    if (!isFinal && !isStopped) {
-                        recognition.stop();
-                    }
-                }, 60000);
-            });
-        }
-
-        // ============================================
         // PROCESS
         // ============================================
         processBtn.addEventListener('click', async () => {
-            if (!selectedFile || isProcessing) return;
+            if (!selectedFile || isProcessing || !tokenValid) return;
 
             isProcessing = true;
-            isStopped = false;
+            processBtn.disabled = true;
+            processBtn.textContent = '⏳ Đang xử lý...';
+
             resultContainer.classList.remove('show');
-            transcript = '';
+            progressContainer.classList.add('show');
+            progressFill.style.width = '0%';
+            progressText.textContent = '⏳ Đang tải lên...';
+            spinner.style.display = 'inline-block';
+            showStatus('⏳ Đang xử lý...', 'info');
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('token', tokenInput.value.trim());
 
             try {
-                // Kiểm tra hỗ trợ
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    showStatus('❌ Trình duyệt không hỗ trợ! Vui lòng dùng Chrome, Edge, hoặc Safari.', 'error');
-                    isProcessing = false;
-                    processBtn.disabled = false;
-                    return;
+                const response = await fetch(`${API_URL}/process`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Lỗi xử lý');
                 }
 
-                // Kiểm tra quyền microphone
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    stream.getTracks().forEach(track => track.stop());
-                } catch (err) {
-                    showStatus('❌ Không có quyền truy cập microphone! Vui lòng cho phép quyền microphone.', 'error');
-                    isProcessing = false;
-                    processBtn.disabled = false;
-                    return;
-                }
-
-                // Hiển thị hướng dẫn
-                showStatus('🎤 Bắt đầu nhận dạng giọng nói... Hãy phát video!', 'info');
-                resultContainer.classList.add('show');
-                resultText.textContent = '🎤 Đang lắng nghe... Phát video để nhận dạng giọng nói.';
-                wordCount.textContent = '0 từ';
-
-                // Phát video
-                videoPlayer.play();
-
-                // Bắt đầu nhận dạng
-                const result = await startRecognition();
-
-                if (isStopped) {
-                    showStatus('⏹️ Đã dừng!', 'info');
-                    return;
-                }
-
-                if (result && result.trim()) {
-                    resultText.textContent = result.trim();
-                    const words = result.trim().split(/\s+/).length;
+                if (data.text) {
+                    resultText.textContent = data.text;
+                    const words = data.text.trim() ? data.text.trim().split(/\s+/).length : 0;
                     wordCount.textContent = words + ' từ';
+                    resultContainer.classList.add('show');
                     progressFill.style.width = '100%';
                     progressText.textContent = '✅ Hoàn tất!';
                     showStatus('✅ Tách lời thành công!', 'success');
                 } else {
-                    resultText.textContent = '⚠️ Không nhận dạng được giọng nói. Vui lòng thử lại với video khác.';
-                    wordCount.textContent = '0 từ';
-                    showStatus('⚠️ Không nhận dạng được giọng nói!', 'error');
+                    throw new Error('Không nhận được kết quả');
                 }
 
             } catch (error) {
-                showStatus(error.message, 'error');
-                resultText.textContent = '❌ Lỗi: ' + error.message;
+                showStatus('❌ ' + error.message, 'error');
+                progressFill.style.width = '0%';
+                progressText.textContent = '❌ Lỗi';
             } finally {
                 isProcessing = false;
                 processBtn.disabled = false;
-                stopBtn.disabled = true;
+                processBtn.textContent = '🚀 Bắt đầu tách lời';
                 spinner.style.display = 'none';
-                videoPlayer.pause();
             }
-        });
-
-        // ============================================
-        // STOP
-        // ============================================
-        stopBtn.addEventListener('click', () => {
-            isStopped = true;
-            if (recognition) {
-                recognition.stop();
-            }
-            videoPlayer.pause();
-            stopBtn.disabled = true;
-            processBtn.disabled = false;
-            showStatus('⏹️ Đã dừng!', 'info');
         });
 
         // ============================================
@@ -942,7 +889,7 @@
         // ============================================
         copyBtn.addEventListener('click', () => {
             const text = resultText.textContent;
-            if (!text || text.startsWith('🎤') || text.startsWith('⚠️') || text.startsWith('❌')) {
+            if (!text) {
                 showStatus('⚠️ Không có nội dung để copy!', 'error');
                 return;
             }
@@ -950,7 +897,7 @@
             navigator.clipboard.writeText(text).then(() => {
                 copyBtn.textContent = '✅ Đã copy!';
                 setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
-                showStatus('✅ Đã copy vào clipboard!', 'success');
+                showStatus('✅ Đã copy!', 'success');
             }).catch(() => {
                 const ta = document.createElement('textarea');
                 ta.value = text;
@@ -968,7 +915,7 @@
         // ============================================
         downloadBtn.addEventListener('click', () => {
             const text = resultText.textContent;
-            if (!text || text.startsWith('🎤') || text.startsWith('⚠️') || text.startsWith('❌')) {
+            if (!text) {
                 showStatus('⚠️ Không có nội dung để tải!', 'error');
                 return;
             }
@@ -977,8 +924,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             const baseName = selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, '') : 'transcript';
-            const lang = languageSelect.value;
-            a.download = `${baseName}_transcript_${lang}.txt`;
+            a.download = baseName + '_transcript.txt';
             a.href = url;
             a.click();
             URL.revokeObjectURL(url);
@@ -998,18 +944,12 @@
             resultContainer.classList.remove('show');
             progressContainer.classList.remove('show');
             processBtn.disabled = true;
-            stopBtn.disabled = true;
-            processBtn.textContent = '🎤 Bắt đầu tách lời';
+            processBtn.textContent = '🚀 Bắt đầu tách lời';
             progressFill.style.width = '0%';
             progressText.textContent = 'Đang chuẩn bị...';
             resultText.textContent = '';
             wordCount.textContent = '0 từ';
             isProcessing = false;
-            isStopped = false;
-            if (recognition) {
-                recognition.stop();
-                recognition = null;
-            }
             hideStatus();
         });
 
@@ -1017,18 +957,10 @@
         // INIT
         // ============================================
         processBtn.disabled = true;
-        stopBtn.disabled = true;
-
-        // Kiểm tra hỗ trợ trình duyệt
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            showStatus('⚠️ Trình duyệt không hỗ trợ Speech Recognition. Vui lòng dùng Chrome, Edge, hoặc Safari.', 'error');
-        } else {
-            showStatus('✅ Trình duyệt hỗ trợ! Chọn file và bắt đầu.', 'success');
-            setTimeout(hideStatus, 3000);
-        }
-
+        dropZone.classList.add('disabled');
         console.log('🎤 Video To Text App ready!');
-        console.log('📱 Dùng Chrome, Edge, hoặc Safari để có trải nghiệm tốt nhất.');
+        console.log('📍 API URL:', API_URL);
     </script>
+
 </body>
 </html>
