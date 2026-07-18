@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎤 Tách Lời Video Thành Chữ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .header h1 span {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 16px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            position: relative;
+        }
+
+        .drop-zone:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .drop-zone.dragover {
+            border-color: #667eea;
+            background: #e8e8ff;
+            transform: scale(1.02);
+        }
+
+        .drop-zone .icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        .drop-zone .text {
+            font-size: 18px;
+            color: #555;
+        }
+
+        .drop-zone .sub-text {
+            font-size: 14px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .drop-zone input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-info {
+            display: none;
+            background: #f0f4ff;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-top: 20px;
+            align-items: center;
+            gap: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .file-info.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-info .file-icon {
+            font-size: 32px;
+        }
+
+        .file-info .file-details {
+            flex: 1;
+        }
+
+        .file-info .file-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .file-info .file-size {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .file-info .remove-btn {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0 10px;
+            transition: transform 0.2s;
+        }
+
+        .file-info .remove-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .options label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .options select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            background: white;
+        }
+
+        .options select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .video-preview {
+            display: none;
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .video-preview.show {
+            display: block;
+        }
+
+        .video-preview video {
+            width: 100%;
+            max-height: 400px;
+            display: block;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00b894, #00a86b);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .progress-status .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e0e0e0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 25px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-container .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .result-container .result-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .result-container .result-header .badge {
+            background: #00b894;
+            color: white;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .result-container .result-text {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #333;
+            border: 1px solid #eee;
+        }
+
+        .result-container .result-text::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .result-container .result-text::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+
+        .result-container .result-text::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .result-actions .btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 15px;
+            margin-top: 0;
+        }
+
+        .supported-formats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 18px;
+        }
+
+        .supported-formats .tag {
+            background: #f0f0ff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .status-msg {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .status-msg.show {
+            display: block;
+        }
+
+        .status-msg.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status-msg.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-msg.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .options {
+                grid-template-columns: 1fr;
+            }
+
+            .drop-zone {
+                padding: 30px 15px;
+            }
+
+            .drop-zone .icon {
+                font-size: 48px;
+            }
+
+            .result-actions {
+                flex-direction: column;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎤 <span>Video To Text</span></h1>
+            <p>Chuyển đổi video/audio thành văn bản - Hoàn toàn offline</p>
+        </div>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone">
+            <div class="icon">📁</div>
+            <div class="text"><strong>Chọn file video hoặc audio</strong></div>
+            <div class="sub-text">Kéo thả hoặc click để chọn (MP4, AVI, MOV, MKV, WEBM, MP3, WAV, M4A)</div>
+            <input type="file" id="fileInput" accept=".mp4,.avi,.mov,.mkv,.webm,.m4v,.mp3,.wav,.m4a,.ogg">
+        </div>
+
+        <!-- File Info -->
+        <div class="file-info" id="fileInfo">
+            <div class="file-icon" id="fileIcon">🎬</div>
+            <div class="file-details">
+                <div class="file-name" id="fileName">video.mp4</div>
+                <div class="file-size" id="fileSize">15 MB</div>
+                <div style="font-size:12px;color:#999;margin-top:2px;" id="fileDuration"></div>
+            </div>
+            <button class="remove-btn" id="removeFile">✕</button>
+        </div>
+
+        <!-- Video Preview -->
+        <div class="video-preview" id="videoPreview">
+            <video id="videoPlayer" controls></video>
+        </div>
+
+        <!-- Options -->
+        <div class="options">
+            <div>
+                <label>🌍 Ngôn ngữ</label>
+                <select id="languageSelect">
+                    <option value="vi-VN">Tiếng Việt</option>
+                    <option value="en-US">English (US)</option>
+                    <option value="en-GB">English (UK)</option>
+                    <option value="zh-CN">中文 (简体)</option>
+                    <option value="zh-TW">中文 (繁體)</option>
+                    <option value="ja-JP">日本語</option>
+                    <option value="ko-KR">한국어</option>
+                    <option value="fr-FR">Français</option>
+                    <option value="de-DE">Deutsch</option>
+                    <option value="es-ES">Español</option>
+                    <option value="ru-RU">Русский</option>
+                    <option value="th-TH">ไทย</option>
+                    <option value="id-ID">Bahasa Indonesia</option>
+                    <option value="auto">🔁 Tự động</option>
+                </select>
+            </div>
+            <div>
+                <label>⏱️ Thời gian</label>
+                <select id="durationSelect">
+                    <option value="full">Toàn bộ video</option>
+                    <option value="30">30 giây</option>
+                    <option value="60">1 phút</option>
+                    <option value="120">2 phút</option>
+                    <option value="300">5 phút</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        <div class="status-msg" id="statusMsg"></div>
+
+        <!-- Buttons -->
+        <div class="btn-group">
+            <button class="btn btn-primary" id="processBtn" disabled>🎤 Bắt đầu tách lời</button>
+            <button class="btn btn-danger" id="stopBtn" disabled>⏹️ Dừng</button>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-status">
+                <span id="progressText">⏳ Đang xử lý...</span>
+                <span class="spinner" id="spinner"></span>
+            </div>
+        </div>
+
+        <!-- Result -->
+        <div class="result-container" id="resultContainer">
+            <div class="result-header">
+                <h3>📝 Kết quả văn bản</h3>
+                <span class="badge" id="wordCount">0 từ</span>
+            </div>
+            <div class="result-text" id="resultText"></div>
+            <div class="result-actions">
+                <button class="btn btn-success" id="copyBtn">📋 Copy</button>
+                <button class="btn btn-outline" id="downloadBtn">💾 Tải xuống</button>
+                <button class="btn btn-outline" id="newBtn">🔄 Làm mới</button>
+            </div>
+        </div>
+
+        <!-- Supported Formats -->
+        <div class="supported-formats">
+            <span class="tag">🎬 MP4</span>
+            <span class="tag">🎬 AVI</span>
+            <span class="tag">🎬 MOV</span>
+            <span class="tag">🎬 MKV</span>
+            <span class="tag">🎬 WEBM</span>
+            <span class="tag">🎵 MP3</span>
+            <span class="tag">🎵 WAV</span>
+            <span class="tag">🎵 M4A</span>
+            <span class="tag">🎵 OGG</span>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // DOM Elements
+        // ============================================
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileDuration = document.getElementById('fileDuration');
+        const fileIcon = document.getElementById('fileIcon');
+        const removeFile = document.getElementById('removeFile');
+        const processBtn = document.getElementById('processBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const spinner = document.getElementById('spinner');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultText = document.getElementById('resultText');
+        const wordCount = document.getElementById('wordCount');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newBtn = document.getElementById('newBtn');
+        const languageSelect = document.getElementById('languageSelect');
+        const durationSelect = document.getElementById('durationSelect');
+        const videoPreview = document.getElementById('videoPreview');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const statusMsg = document.getElementById('statusMsg');
+
+        let selectedFile = null;
+        let isProcessing = false;
+        let isStopped = false;
+        let recognition = null;
+        let transcript = '';
+        let audioContext = null;
+        let source = null;
+        let processor = null;
+
+        // ============================================
+        // FILE HANDLING
+        // ============================================
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+        }
+
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            if (mins > 0) {
+                return `${mins} phút ${secs} giây`;
+            }
+            return `${secs} giây`;
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const videoExts = ['mp4', 'avi', 'mov', 'mkv', 'webm', 'm4v'];
+            if (videoExts.includes(ext)) return '🎬';
+            return '🎵';
+        }
+
+        function handleFile(file) {
+            if (!file) return;
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const allowed = ['mp4', 'avi', 'mov', 'mkv', 'webm', 'm4v', 'mp3', 'wav', 'm4a', 'ogg'];
+            if (!allowed.includes(ext)) {
+                showStatus('⚠️ Định dạng không hỗ trợ!', 'error');
+                return;
+            }
+
+            if (file.size > 500 * 1024 * 1024) {
+                showStatus('⚠️ File quá lớn! Tối đa 500MB.', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileIcon.textContent = getFileIcon(file.name);
+            fileInfo.classList.add('show');
+            dropZone.style.display = 'none';
+            resultContainer.classList.remove('show');
+            progressContainer.classList.remove('show');
+
+            // Preview video
+            const url = URL.createObjectURL(file);
+            videoPlayer.src = url;
+            videoPreview.classList.add('show');
+
+            videoPlayer.onloadedmetadata = function() {
+                const duration = videoPlayer.duration;
+                if (duration && !isNaN(duration)) {
+                    fileDuration.textContent = '⏱️ ' + formatTime(duration);
+                }
+            };
+
+            processBtn.disabled = false;
+            hideStatus();
+        }
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        removeFile.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            dropZone.style.display = 'block';
+            videoPreview.classList.remove('show');
+            videoPlayer.src = '';
+            processBtn.disabled = true;
+            resultContainer.classList.remove('show');
+            progressContainer.classList.remove('show');
+            hideStatus();
+        });
+
+        // ============================================
+        // STATUS MESSAGE
+        // ============================================
+        function showStatus(message, type = 'info') {
+            statusMsg.textContent = message;
+            statusMsg.className = 'status-msg show ' + type;
+        }
+
+        function hideStatus() {
+            statusMsg.className = 'status-msg';
+        }
+
+        // ============================================
+        // SPEECH RECOGNITION
+        // ============================================
+        function startRecognition() {
+            return new Promise((resolve, reject) => {
+                const lang = languageSelect.value;
+                const maxDuration = parseInt(durationSelect.value);
+
+                // Kiểm tra hỗ trợ Web Speech API
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    reject(new Error('❌ Trình duyệt không hỗ trợ Speech Recognition!\nVui lòng dùng Chrome, Edge, hoặc Safari.'));
+                    return;
+                }
+
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+
+                recognition.lang = lang === 'auto' ? 'vi-VN' : lang;
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.maxAlternatives = 1;
+
+                transcript = '';
+                let finalTranscript = '';
+                let startTime = Date.now();
+                let isFinal = false;
+
+                recognition.onresult = function(event) {
+                    let interimTranscript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcriptPart = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcriptPart + ' ';
+                        } else {
+                            interimTranscript += transcriptPart;
+                        }
+                    }
+
+                    transcript = finalTranscript + interimTranscript;
+                    resultText.textContent = transcript;
+
+                    const words = transcript.trim() ? transcript.split(/\s+/).length : 0;
+                    wordCount.textContent = words + ' từ';
+
+                    // Update progress
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    const progress = Math.min((elapsed / 60) * 100, 95);
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = `⏳ Đang nhận dạng... (${Math.floor(elapsed)}s)`;
+
+                    // Kiểm tra thời gian
+                    if (maxDuration !== 'full' && elapsed >= maxDuration) {
+                        isFinal = true;
+                        recognition.stop();
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    if (event.error === 'not-allowed') {
+                        reject(new Error('❌ Không có quyền truy cập microphone!\nVui lòng cho phép quyền microphone.'));
+                    } else if (event.error === 'no-speech') {
+                        // Không có giọng nói, tiếp tục
+                    } else if (event.error === 'audio-capture') {
+                        reject(new Error('❌ Không tìm thấy microphone!\nVui lòng kiểm tra microphone.'));
+                    } else if (!isFinal) {
+                        reject(new Error('❌ Lỗi: ' + event.error));
+                    }
+                };
+
+                recognition.onend = function() {
+                    if (!isStopped) {
+                        resolve(transcript);
+                    }
+                };
+
+                // Bắt đầu nhận dạng
+                recognition.start();
+                showStatus('🎤 Đang lắng nghe... Hãy phát video có tiếng.', 'info');
+                progressContainer.classList.add('show');
+                progressFill.style.width = '0%';
+                progressText.textContent = '🎤 Đang lắng nghe...';
+                spinner.style.display = 'inline-block';
+                processBtn.disabled = true;
+                stopBtn.disabled = false;
+
+                // Tự động dừng sau 60 giây nếu không có âm thanh
+                setTimeout(() => {
+                    if (!isFinal && !isStopped) {
+                        recognition.stop();
+                    }
+                }, 60000);
+            });
+        }
+
+        // ============================================
+        // PROCESS
+        // ============================================
+        processBtn.addEventListener('click', async () => {
+            if (!selectedFile || isProcessing) return;
+
+            isProcessing = true;
+            isStopped = false;
+            resultContainer.classList.remove('show');
+            transcript = '';
+
+            try {
+                // Kiểm tra hỗ trợ
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    showStatus('❌ Trình duyệt không hỗ trợ! Vui lòng dùng Chrome, Edge, hoặc Safari.', 'error');
+                    isProcessing = false;
+                    processBtn.disabled = false;
+                    return;
+                }
+
+                // Kiểm tra quyền microphone
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop());
+                } catch (err) {
+                    showStatus('❌ Không có quyền truy cập microphone! Vui lòng cho phép quyền microphone.', 'error');
+                    isProcessing = false;
+                    processBtn.disabled = false;
+                    return;
+                }
+
+                // Hiển thị hướng dẫn
+                showStatus('🎤 Bắt đầu nhận dạng giọng nói... Hãy phát video!', 'info');
+                resultContainer.classList.add('show');
+                resultText.textContent = '🎤 Đang lắng nghe... Phát video để nhận dạng giọng nói.';
+                wordCount.textContent = '0 từ';
+
+                // Phát video
+                videoPlayer.play();
+
+                // Bắt đầu nhận dạng
+                const result = await startRecognition();
+
+                if (isStopped) {
+                    showStatus('⏹️ Đã dừng!', 'info');
+                    return;
+                }
+
+                if (result && result.trim()) {
+                    resultText.textContent = result.trim();
+                    const words = result.trim().split(/\s+/).length;
+                    wordCount.textContent = words + ' từ';
+                    progressFill.style.width = '100%';
+                    progressText.textContent = '✅ Hoàn tất!';
+                    showStatus('✅ Tách lời thành công!', 'success');
+                } else {
+                    resultText.textContent = '⚠️ Không nhận dạng được giọng nói. Vui lòng thử lại với video khác.';
+                    wordCount.textContent = '0 từ';
+                    showStatus('⚠️ Không nhận dạng được giọng nói!', 'error');
+                }
+
+            } catch (error) {
+                showStatus(error.message, 'error');
+                resultText.textContent = '❌ Lỗi: ' + error.message;
+            } finally {
+                isProcessing = false;
+                processBtn.disabled = false;
+                stopBtn.disabled = true;
+                spinner.style.display = 'none';
+                videoPlayer.pause();
+            }
+        });
+
+        // ============================================
+        // STOP
+        // ============================================
+        stopBtn.addEventListener('click', () => {
+            isStopped = true;
+            if (recognition) {
+                recognition.stop();
+            }
+            videoPlayer.pause();
+            stopBtn.disabled = true;
+            processBtn.disabled = false;
+            showStatus('⏹️ Đã dừng!', 'info');
+        });
+
+        // ============================================
+        // COPY
+        // ============================================
+        copyBtn.addEventListener('click', () => {
+            const text = resultText.textContent;
+            if (!text || text.startsWith('🎤') || text.startsWith('⚠️') || text.startsWith('❌')) {
+                showStatus('⚠️ Không có nội dung để copy!', 'error');
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.textContent = '✅ Đã copy!';
+                setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
+                showStatus('✅ Đã copy vào clipboard!', 'success');
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                copyBtn.textContent = '✅ Đã copy!';
+                setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
+            });
+        });
+
+        // ============================================
+        // DOWNLOAD
+        // ============================================
+        downloadBtn.addEventListener('click', () => {
+            const text = resultText.textContent;
+            if (!text || text.startsWith('🎤') || text.startsWith('⚠️') || text.startsWith('❌')) {
+                showStatus('⚠️ Không có nội dung để tải!', 'error');
+                return;
+            }
+
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const baseName = selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, '') : 'transcript';
+            const lang = languageSelect.value;
+            a.download = `${baseName}_transcript_${lang}.txt`;
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+            showStatus('✅ Đã tải xuống!', 'success');
+        });
+
+        // ============================================
+        // NEW / RESET
+        // ============================================
+        newBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            dropZone.style.display = 'block';
+            videoPreview.classList.remove('show');
+            videoPlayer.src = '';
+            resultContainer.classList.remove('show');
+            progressContainer.classList.remove('show');
+            processBtn.disabled = true;
+            stopBtn.disabled = true;
+            processBtn.textContent = '🎤 Bắt đầu tách lời';
+            progressFill.style.width = '0%';
+            progressText.textContent = 'Đang chuẩn bị...';
+            resultText.textContent = '';
+            wordCount.textContent = '0 từ';
+            isProcessing = false;
+            isStopped = false;
+            if (recognition) {
+                recognition.stop();
+                recognition = null;
+            }
+            hideStatus();
+        });
+
+        // ============================================
+        // INIT
+        // ============================================
+        processBtn.disabled = true;
+        stopBtn.disabled = true;
+
+        // Kiểm tra hỗ trợ trình duyệt
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            showStatus('⚠️ Trình duyệt không hỗ trợ Speech Recognition. Vui lòng dùng Chrome, Edge, hoặc Safari.', 'error');
+        } else {
+            showStatus('✅ Trình duyệt hỗ trợ! Chọn file và bắt đầu.', 'success');
+            setTimeout(hideStatus, 3000);
+        }
+
+        console.log('🎤 Video To Text App ready!');
+        console.log('📱 Dùng Chrome, Edge, hoặc Safari để có trải nghiệm tốt nhất.');
+    </script>
+</body>
+</html>
