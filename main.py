@@ -8,12 +8,9 @@ import json
 import os
 import time
 from flask import Flask
-
-# ================= CẤU HÌNH =================
 BOT_TOKEN = "8314558446:AAFGz92fVeLdomzfN0EeNZk-HFtDSC8hHEg"
 LINK4M_TOKEN = "699ac288bb556c3eae114a58"
 RENDER_URL = "https://voice-mleh.onrender.com" 
-# ============================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
@@ -21,8 +18,6 @@ app = Flask(__name__)
 ADMIN_ID = None 
 USER_SESSIONS = {} 
 OTP_CODES = {}     
-
-# --- HỆ THỐNG LƯU TRỮ TỰ ĐỘNG ---
 DB_FILE = "database.json"
 
 def load_db():
