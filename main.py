@@ -9,7 +9,7 @@ from flask import Flask
 # ================= CẤU HÌNH =================
 BOT_TOKEN = "8314558446:AAFGz92fVeLdomzfN0EeNZk-HFtDSC8hHEg"
 LINK4M_TOKEN = "699ac288bb556c3eae114a58"
-# ĐIỀN LINK RENDER THẬT CỦA BẠN VÀO ĐÂY
+# ĐIỀN ĐÚNG LINK RENDER CỦA BẠN
 RENDER_URL = "https://voice-mleh.onrender.com" 
 # ============================================
 
@@ -21,31 +21,30 @@ PRODUCTS = {}
 USER_SESSIONS = {} 
 OTP_CODES = {}     
 
-# --- WEBHOOK LINK4M (KHÔNG GỬI LINK WEB, MÀ GỬI MÃ OTP) ---
+# --- WEBHOOK LINK4M ---
 @app.route('/callback/<chat_id>/<token>', methods=['GET'])
 def link4m_callback(chat_id, token):
     try:
         chat_id = int(chat_id)
+        print(f"-> Nhận Callback từ ID: {chat_id} | Token: {token}")
+        
         if chat_id in USER_SESSIONS:
             session = USER_SESSIONS[chat_id]
             session["links_done"] += 1
             req_links = PRODUCTS[session["product"]]["links_required"]
             
             if session["links_done"] >= req_links:
-                # Đã vượt đủ link -> Tạo mã OTP gửi thẳng vào Telegram
                 otp = ''.join(random.choices(string.digits, k=6))
                 OTP_CODES[otp] = {"chat_id": chat_id, "product": session["product"]}
-                
-                # Xóa phiên chờ để giải phóng
                 del USER_SESSIONS[chat_id]
                 
                 msg = (f"🎉 **VƯỢT LINK THÀNH CÔNG!**\n\n"
                        f"Để nhận tài khoản, hãy gõ lệnh:\n"
                        f"`/claim {otp}`\n\n"
-                       f"*(Mã chỉ dùng được 1 lần, không chia sẻ cho ai)*")
+                       f"*(Mã chỉ dùng được 1 lần)*")
                 bot.send_message(chat_id, msg, parse_mode='Markdown')
+                print(f"-> Đã gửi OTP {otp} cho {chat_id}")
             else:
-                # Nếu cần vượt nhiều link, gửi link tiếp theo
                 target_url = f"{RENDER_URL}/callback/{chat_id}/{token}"
                 api_url = f"https://link4m.co/api-shorten/v2?api={LINK4M_TOKEN}&url={target_url}"
                 res = requests.get(api_url).json()
@@ -53,11 +52,14 @@ def link4m_callback(chat_id, token):
                     markup = InlineKeyboardMarkup()
                     markup.add(InlineKeyboardButton(f"👉 VƯỢT LINK {session['links_done'] + 1}/{req_links}", url=res.get('shortenedUrl')))
                     bot.send_message(chat_id, f"Vui lòng vượt thêm {req_links - session['links_done']} link nữa.", reply_markup=markup)
+        else:
+            print(f"-> Không tìm thấy phiên của {chat_id}")
         return "OK", 200
     except Exception as e:
+        print("LỖI CALLBACK:", e)
         return "Error", 500
 
-# --- LỆNH CLAIM ACC BẰNG MÃ OTP TRÊN TELEGRAM ---
+# --- LỆNH CLAIM ---
 @bot.message_handler(commands=['claim'])
 def claim_acc(message):
     chat_id = message.chat.id
@@ -68,8 +70,6 @@ def claim_acc(message):
             return
             
         session = OTP_CODES[otp]
-        
-        # Kiểm tra xem có đúng là người vượt link không
         if session["chat_id"] != chat_id:
             bot.reply_to(message, "❌ Bạn không phải người sở hữu mã này!")
             return
@@ -81,14 +81,14 @@ def claim_acc(message):
             return
             
         acc = PRODUCTS[prod_name]["stock"].pop(0)
-        del OTP_CODES[otp] # Xóa mã OTP ngay lập tức
+        del OTP_CODES[otp]
         
         bot.reply_to(message, f"🎁 **TÀI KHOẢN CỦA BẠN:**\n\n`{acc['user']} | {acc['pass']}`\n\n*(Hãy copy ngay)*", parse_mode='Markdown')
         
     except Exception:
         bot.reply_to(message, "Cú pháp: `/claim 123456`", parse_mode='Markdown')
 
-# --- BOT TELEGRAM CƠ BẢN ---
+# --- BOT CƠ BẢN ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     global ADMIN_ID
@@ -170,9 +170,17 @@ def buy_product(call):
             markup = InlineKeyboardMarkup()
             markup.add(InlineKeyboardButton(f"👉 VƯỢT LINK 1/{req_links}", url=res.get('shortenedUrl')))
             bot.send_message(chat_id, f"Đã chọn: {prod_name}\nBấm nút dưới để làm nhiệm vụ.", reply_markup=markup)
-    except: pass
+    except Exception as e: 
+        print("Lỗi tạo link:", e)
 
-def run_bot(): bot.polling(none_stop=True)
+def run_bot(): 
+    print("Bot đang chạy...")
+    bot.polling(none_stop=True, interval=1, timeout=20)
+
 if __name__ == '__main__':
-    threading.Thread(target=run_bot).start()
+    # Chạy Bot ở luồng riêng để không chặn Flask
+    t = threading.Thread(target=run_bot)
+    t.daemon = True
+    t.start()
+    # Chạy Flask
     app.run(host='0.0.0.0', port=3000)
