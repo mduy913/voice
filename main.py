@@ -4,47 +4,24 @@ import requests
 import random
 import string
 import threading
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import Flask
 
 # ================= CẤU HÌNH =================
 BOT_TOKEN = "8314558446:AAFGz92fVeLdomzfN0EeNZk-HFtDSC8hHEg"
 LINK4M_TOKEN = "699ac288bb556c3eae114a58"
-WEB_URL = "https://mduy913.github.io/ios-project/" # Sửa lại link web của bạn
-RENDER_URL = "https://ten-bot.onrender.com"         # Sẽ điền link Render sau khi tạo xong
+# ĐIỀN LINK RENDER THẬT CỦA BẠN VÀO ĐÂY
+RENDER_URL = "https://voice-mleh.onrender.com" 
 # ============================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
-CORS(app)
 
 ADMIN_ID = None 
-PRODUCTS = {}   # Lưu sản phẩm: {"VIP": {"links_required": 1, "stock": [{"user":"u1","pass":"p1"}]}}
-USER_SESSIONS = {} # Lưu phiên: {chat_id: {"product": "VIP", "links_done": 0}}
-OTP_CODES = {}     # Lưu mã OTP: {"849201": {"chat_id": 123, "product": "VIP"}}
+PRODUCTS = {}   
+USER_SESSIONS = {} 
+OTP_CODES = {}     
 
-# --- API CHO WEB ---
-@app.route('/api/claim_otp', methods=['POST'])
-def claim_otp():
-    data = request.json
-    otp = data.get('otp')
-    
-    if not otp or otp not in OTP_CODES:
-        return jsonify({"status": "error", "message": "Mã OTP không hợp lệ hoặc đã hết hạn!"})
-    
-    session = OTP_CODES[otp]
-    prod_name = session["product"]
-    
-    if prod_name not in PRODUCTS or not PRODUCTS[prod_name]["stock"]:
-        del OTP_CODES[otp]
-        return jsonify({"status": "error", "message": "Sản phẩm đã hết hàng!"})
-        
-    acc = PRODUCTS[prod_name]["stock"].pop(0)
-    del OTP_CODES[otp] # Xóa mã ngay lập tức
-    
-    return jsonify({"status": "success", "user": acc["user"], "pass": acc["pass"]})
-
-# --- WEBHOOK LINK4M ---
+# --- WEBHOOK LINK4M (KHÔNG GỬI LINK WEB, MÀ GỬI MÃ OTP) ---
 @app.route('/callback/<chat_id>/<token>', methods=['GET'])
 def link4m_callback(chat_id, token):
     try:
@@ -55,18 +32,20 @@ def link4m_callback(chat_id, token):
             req_links = PRODUCTS[session["product"]]["links_required"]
             
             if session["links_done"] >= req_links:
+                # Đã vượt đủ link -> Tạo mã OTP gửi thẳng vào Telegram
                 otp = ''.join(random.choices(string.digits, k=6))
                 OTP_CODES[otp] = {"chat_id": chat_id, "product": session["product"]}
+                
+                # Xóa phiên chờ để giải phóng
                 del USER_SESSIONS[chat_id]
                 
-                markup = InlineKeyboardMarkup()
-                markup.add(InlineKeyboardButton("🌐 TRUY CẬP WEB NHẬN ACC", url=WEB_URL))
-                
                 msg = (f"🎉 **VƯỢT LINK THÀNH CÔNG!**\n\n"
-                       f"Mã OTP của bạn là: `{otp}`\n\n"
-                       f"👉 Hãy bấm nút bên dưới để sang Web và nhập mã này.")
-                bot.send_message(chat_id, msg, reply_markup=markup, parse_mode='Markdown')
+                       f"Để nhận tài khoản, hãy gõ lệnh:\n"
+                       f"`/claim {otp}`\n\n"
+                       f"*(Mã chỉ dùng được 1 lần, không chia sẻ cho ai)*")
+                bot.send_message(chat_id, msg, parse_mode='Markdown')
             else:
+                # Nếu cần vượt nhiều link, gửi link tiếp theo
                 target_url = f"{RENDER_URL}/callback/{chat_id}/{token}"
                 api_url = f"https://link4m.co/api-shorten/v2?api={LINK4M_TOKEN}&url={target_url}"
                 res = requests.get(api_url).json()
@@ -78,7 +57,38 @@ def link4m_callback(chat_id, token):
     except Exception as e:
         return "Error", 500
 
-# --- BOT TELEGRAM ---
+# --- LỆNH CLAIM ACC BẰNG MÃ OTP TRÊN TELEGRAM ---
+@bot.message_handler(commands=['claim'])
+def claim_acc(message):
+    chat_id = message.chat.id
+    try:
+        otp = message.text.replace('/claim', '').strip()
+        if not otp or otp not in OTP_CODES:
+            bot.reply_to(message, "❌ Mã OTP không hợp lệ hoặc đã hết hạn!")
+            return
+            
+        session = OTP_CODES[otp]
+        
+        # Kiểm tra xem có đúng là người vượt link không
+        if session["chat_id"] != chat_id:
+            bot.reply_to(message, "❌ Bạn không phải người sở hữu mã này!")
+            return
+            
+        prod_name = session["product"]
+        if prod_name not in PRODUCTS or not PRODUCTS[prod_name]["stock"]:
+            del OTP_CODES[otp]
+            bot.reply_to(message, "❌ Sản phẩm đã hết hàng!")
+            return
+            
+        acc = PRODUCTS[prod_name]["stock"].pop(0)
+        del OTP_CODES[otp] # Xóa mã OTP ngay lập tức
+        
+        bot.reply_to(message, f"🎁 **TÀI KHOẢN CỦA BẠN:**\n\n`{acc['user']} | {acc['pass']}`\n\n*(Hãy copy ngay)*", parse_mode='Markdown')
+        
+    except Exception:
+        bot.reply_to(message, "Cú pháp: `/claim 123456`", parse_mode='Markdown')
+
+# --- BOT TELEGRAM CƠ BẢN ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     global ADMIN_ID
