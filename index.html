@@ -28,14 +28,16 @@
 
 <script>
 /* ============================================================
-   THỢ RÈN NGỤC TỐI - Web Mobile Landscape
+   THỢ RÈN NGỤC TỐI v2
+   - Dân làng cúng vật cho quái
+   - 3 mạng sống
+   - Mục tiêu 100 ngày → WIN
    ============================================================ */
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 
-// ---------- Cấu hình ----------
-const W = 960, H = 540;          // kích thước logic (ngang)
-let scale = 1, offsetX = 0, offsetY = 0;
+const W = 960, H = 540;
+let scale = 1;
 
 function resize() {
   const vw = window.innerWidth, vh = window.innerHeight;
@@ -48,39 +50,49 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
-// ---------- Trạng thái game ----------
+// ---------- Trạng thái ----------
 const GS = {
   day: 1,
   gold: 0,
   survivalScore: 0,
-  swordsInPile: 0,       // kiếm chờ nhặt
-  currentSword: null,    // kiếm đang rèn
-  atForge: false,        // đang ở lò
+  swordsInPile: 0,
+  currentSword: null,
   hammerCount: 0,
   breakChance: 0,
   coal: 5,
+  lives: 3,             // 🆕 3 mạng
+  requiredScore: 0,     // 🆕 yêu cầu tăng dần
+  tributeFromVillagers: 0, // 🆕 dân cúng
   log: [],
   gameOver: false,
   won: false,
-  phase: 'day',          // day / night
+  phase: 'day',
+  totalForged: 0,
 };
 
+const MAX_DAY = 100; // 🆕 mục tiêu
+
 const SWORD_TIERS = [
-  { name:'Kiếm gỉ',    color:'#8a7a6a', minVal:5,   maxVal:20 },
-  { name:'Kiếm sắt',   color:'#c8c8c8', minVal:20,  maxVal:60 },
-  { name:'Kiếm thép',  color:'#5fd35f', minVal:60,  maxVal:150 },
-  { name:'Kiếm bạc',   color:'#5fa8ff', minVal:150, maxVal:400 },
-  { name:'Kiếm rồng',  color:'#b45fff', minVal:400, maxVal:1000 },
-  { name:'Kiếm thần',  color:'#ffd700', minVal:1000, maxVal:9999 },
+  { name:'Kiếm gỉ',   color:'#8a7a6a', minVal:5,    maxVal:20 },
+  { name:'Kiếm sắt',  color:'#c8c8c8', minVal:20,   maxVal:60 },
+  { name:'Kiếm thép', color:'#5fd35f', minVal:60,   maxVal:150 },
+  { name:'Kiếm bạc',  color:'#5fa8ff', minVal:150,  maxVal:400 },
+  { name:'Kiếm rồng', color:'#b45fff', minVal:400,  maxVal:1000 },
+  { name:'Kiếm thần', color:'#ffd700', minVal:1000, maxVal:9999 },
 ];
+
+// 🆕 Yêu cầu quái tăng dần (cấp số nhân nhẹ)
+function requiredForDay(d) {
+  // Ngày 1: 30, ngày 100: ~3000 (tăng ~7% mỗi ngày)
+  return Math.floor(30 * Math.pow(1.05, d - 1));
+}
 
 function newSword() {
   return {
     tier: 0,
-    value: 8 + Math.floor(Math.random() * 7), // 8-15
+    value: 8 + Math.floor(Math.random() * 7),
     cracked: false,
     heated: false,
-    id: Math.random().toString(36).slice(2,7),
   };
 }
 
@@ -92,22 +104,36 @@ function swordTier(sw) {
   return t;
 }
 
-// ---------- Log ----------
 function addLog(msg, color='#e8d8c0') {
   GS.log.push({ msg, color, t: performance.now() });
-  if (GS.log.length > 6) GS.log.shift();
+  if (GS.log.length > 7) GS.log.shift();
 }
 
 // ---------- Bắt đầu ngày ----------
 function startDay() {
   GS.phase = 'day';
-  GS.swordsInPile = 10;
   GS.currentSword = null;
-  GS.atForge = false;
   GS.hammerCount = 0;
   GS.breakChance = 0;
-  GS.coal = Math.min(10, GS.coal + 5);
-  addLog(`☀️ Ngày ${GS.day}: quái ném 10 cây kiếm vào ngục!`, '#ffcc66');
+  GS.coal = Math.min(12, GS.coal + 5);
+
+  // 🆕 Quái yêu cầu ngày càng cao
+  GS.requiredScore = requiredForDay(GS.day);
+
+  // 🆕 Dân làng cúng vật cho quái → quái ném thêm kiếm vào ngục
+  const villagerExtra = Math.floor(2 + Math.random() * 4); // 2-5 kiếm
+  GS.tributeFromVillagers = villagerExtra;
+  GS.swordsInPile = 10 + villagerExtra;
+
+  // 🆕 Dân cũng cúng vàng/thức ăn → đôi khi có than thêm
+  if (Math.random() < 0.4) {
+    const extraCoal = 1 + Math.floor(Math.random() * 3);
+    GS.coal += extraCoal;
+    addLog(`🧑‍🌾 Dân làng cúng +${extraCoal} than cho quái (bạn nhặt được).`, '#aaddff');
+  }
+
+  addLog(`☀️ NGÀY ${GS.day}/${MAX_DAY} — Quái yêu cầu: ${GS.requiredScore} điểm`, '#ffcc66');
+  addLog(`🐉 Dân làng nộp ${villagerExtra} kiếm → tổng đống: ${GS.swordsInPile}`, '#cc88ff');
 }
 
 // ---------- Hành động ----------
@@ -119,19 +145,18 @@ function takeSword() {
   GS.currentSword = newSword();
   GS.hammerCount = 0;
   GS.breakChance = 0;
-  GS.atForge = false;
-  addLog(`🗡️ Nhặt được ${SWORD_TIERS[GS.currentSword.tier].name} (giá trị ${GS.currentSword.value})`, '#aaddff');
+  addLog(`🗡️ Nhặt ${SWORD_TIERS[GS.currentSword.tier].name} (${GS.currentSword.value})`, '#aaddff');
 }
 
 function goForge() {
   if (GS.gameOver || GS.won) return;
-  if (!GS.currentSword) { addLog('⚠️ Chưa có kiếm để nung!', '#ffaa44'); return; }
+  if (!GS.currentSword) { addLog('⚠️ Chưa có kiếm!', '#ffaa44'); return; }
   if (GS.coal <= 0) { addLog('❌ Hết than!', '#ff6666'); return; }
-  if (GS.currentSword.heated) { addLog('🔥 Kiếm đã nung rồi!', '#ffaa44'); return; }
+  if (GS.currentSword.heated) { addLog('🔥 Đã nung rồi!', '#ffaa44'); return; }
   GS.coal--;
   GS.currentSword.heated = true;
   GS.breakChance = Math.max(0, GS.breakChance - 5);
-  addLog('🔥 Nung kiếm — giảm 5% nguy cơ vỡ!', '#ff8844');
+  addLog('🔥 Nung — giảm 5% nguy cơ vỡ!', '#ff8844');
 }
 
 function hammer() {
@@ -144,104 +169,93 @@ function hammer() {
   let result;
 
   if (roll < 10) {
-    // Đại thành
-    sw.value += 30;
-    sw.cracked = false;
-    result = { msg:'🌟 ĐẠI THÀNH! +30 giá trị', color:'#ffd700' };
-  } else if (roll < 45 + 0) {
-    // Tăng giá trị
+    sw.value += 30; sw.cracked = false;
+    result = { msg:'🌟 ĐẠI THÀNH! +30', color:'#ffd700' };
+  } else if (roll < 45) {
     const inc = 5 + Math.floor(Math.random() * 11);
     sw.value += inc;
-    result = { msg:`✨ Tăng giá trị +${inc}`, color:'#88ff88' };
+    result = { msg:`✨ +${inc} giá trị`, color:'#88ff88' };
   } else if (roll < 75) {
-    // Nứt
     sw.value = Math.max(1, sw.value - 10);
     sw.cracked = true;
-    result = { msg:'💥 Nứt! -10 giá trị', color:'#ffaa44' };
+    result = { msg:'💥 Nứt! -10', color:'#ffaa44' };
   } else {
-    // Vỡ
-    addLog('💀 KIẾM VỠ TAN! Mất kiếm.', '#ff4444');
-    GS.currentSword = null;
-    GS.hammerCount = 0;
-    GS.breakChance = 0;
+    addLog('💀 KIẾM VỠ TAN!', '#ff4444');
+    GS.currentSword = null; GS.hammerCount = 0; GS.breakChance = 0;
     return;
   }
 
-  // Tăng nguy cơ vỡ theo số lần đập
-  GS.breakChance += 2;
-  if (GS.breakChance > 80) GS.breakChance = 80;
+  GS.breakChance = Math.min(80, GS.breakChance + 2);
 
-  // Kiểm tra vỡ do nguy cơ tích lũy
   if (Math.random() * 100 < GS.breakChance) {
-    addLog('💀 Áp lực quá lớn — KIẾM VỠ!', '#ff4444');
-    GS.currentSword = null;
-    GS.hammerCount = 0;
-    GS.breakChance = 0;
+    addLog('💀 Áp lực quá lớn — VỠ!', '#ff4444');
+    GS.currentSword = null; GS.hammerCount = 0; GS.breakChance = 0;
     return;
   }
 
-  // Cập nhật tier
   const oldTier = sw.tier;
   sw.tier = swordTier(sw);
   if (sw.tier > oldTier) {
-    result.msg += ` → THĂNG CẤP: ${SWORD_TIERS[sw.tier].name}!`;
+    result.msg += ` → ${SWORD_TIERS[sw.tier].name}!`;
     result.color = SWORD_TIERS[sw.tier].color;
   }
-
   addLog(result.msg, result.color);
 }
 
 function storeSword() {
   if (GS.gameOver || GS.won) return;
-  if (!GS.currentSword) { addLog('⚠️ Không có kiếm để cất!', '#ffaa44'); return; }
+  if (!GS.currentSword) { addLog('⚠️ Không có kiếm!', '#ffaa44'); return; }
   const sw = GS.currentSword;
   GS.gold += Math.floor(sw.value * 0.5);
   GS.survivalScore += sw.value;
+  GS.totalForged++;
   addLog(`📦 Cất ${SWORD_TIERS[sw.tier].name} (${sw.value}) → +${Math.floor(sw.value*0.5)} vàng`, '#88ddff');
-  GS.currentSword = null;
-  GS.hammerCount = 0;
-  GS.breakChance = 0;
+  GS.currentSword = null; GS.hammerCount = 0; GS.breakChance = 0;
 }
 
 function endDay() {
   if (GS.gameOver || GS.won) return;
   if (GS.phase === 'night') return;
 
-  // Nộp kiếm cho quái
   if (GS.currentSword) {
     GS.survivalScore += GS.currentSword.value;
-    addLog(`🐉 Nộp ${SWORD_TIERS[GS.currentSword.tier].name} (${GS.currentSword.value}) cho quái`, '#cc88ff');
+    GS.totalForged++;
+    addLog(`🐉 Nộp ${SWORD_TIERS[GS.currentSword.tier].name} (${GS.currentSword.value})`, '#cc88ff');
     GS.currentSword = null;
   }
-  // Kiếm còn trong đống bị mất
-  if (GS.swordsInPile > 0) {
-    addLog(`🗑️ ${GS.swordsInPile} kiếm thừa bị quái lấy lại.`, '#888');
-    GS.swordsInPile = 0;
-  }
-
+  GS.swordsInPile = 0;
   GS.phase = 'night';
-  addLog('🌙 Đêm xuống... quái kiểm tra thành quả.', '#8888cc');
+  addLog('🌙 Đêm xuống... quái kiểm tra.', '#8888cc');
 
   setTimeout(() => {
-    // Đánh giá sống sót
-    const need = GS.day * 30;
+    const need = GS.requiredScore;
     if (GS.survivalScore < need) {
-      GS.gameOver = true;
-      addLog('💀 Quái nổi giận — NGƯƠI BỊ ĂN THỊT!', '#ff2222');
-    } else {
-      // Thưởng + sang ngày
-      GS.gold += 10;
-      GS.day++;
-      addLog(`✅ Sống sót! Sang ngày ${GS.day}. +10 vàng thưởng.`, '#88ff88');
-      // Kiểm tra thắng
-      if (GS.survivalScore >= 3000) {
-        GS.won = true;
-        addLog('🏆 BẠN ĐÃ RÈN ĐỦ KIẾM THẦN — PHÁ CỬA TRỐN THOÁT!', '#ffd700');
-      } else {
-        startDay();
+      // ❤️ Mất 1 mạng
+      GS.lives--;
+      addLog(`💔 KHÔNG ĐỦ! Mất 1 mạng. Còn ${GS.lives}/3`, '#ff4444');
+      if (GS.lives <= 0) {
+        GS.gameOver = true;
+        addLog('💀 Hết mạng — QUÁI ĂN THỊT BẠN!', '#ff2222');
+        return;
       }
+      // Vẫn sang ngày nhưng điểm reset về 0
+      GS.survivalScore = 0;
+      GS.day++;
+      if (GS.day > MAX_DAY) { GS.won = true; addLog('🏆 SỐNG QUA 100 NGÀY — CHIẾN THẮNG!', '#ffd700'); return; }
+      startDay();
+    } else {
+      // ✅ Đạt
+      GS.gold += 15;
+      GS.day++;
+      if (GS.day > MAX_DAY) {
+        GS.won = true;
+        addLog('🏆 SỐNG QUA 100 NGÀY — CHIẾN THẮNG!', '#ffd700');
+        return;
+      }
+      addLog(`✅ Đạt yêu cầu! +15 vàng. Sang ngày ${GS.day}.`, '#88ff88');
+      startDay();
     }
-  }, 1500);
+  }, 1400);
 }
 
 // ---------- Vẽ ----------
@@ -250,27 +264,22 @@ const buttons = [];
 function drawButton(x, y, w, h, label, color, onClick, disabled=false) {
   ctx.save();
   ctx.globalAlpha = disabled ? 0.35 : 1;
-  // bóng
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   roundRect(x+3, y+3, w, h, 10); ctx.fill();
-  // nền
   const grad = ctx.createLinearGradient(x, y, x, y+h);
   grad.addColorStop(0, color);
   grad.addColorStop(1, shade(color, -40));
   ctx.fillStyle = grad;
   roundRect(x, y, w, h, 10); ctx.fill();
-  // viền
   ctx.strokeStyle = shade(color, 40);
   ctx.lineWidth = 2;
   roundRect(x, y, w, h, 10); ctx.stroke();
-  // chữ
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 18px Segoe UI';
+  ctx.font = 'bold 16px Segoe UI';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, x + w/2, y + h/2);
   ctx.restore();
-
   buttons.push({ x, y, w, h, onClick, disabled });
 }
 
@@ -293,33 +302,26 @@ function shade(hex, amt) {
   return `rgb(${r},${g},${b})`;
 }
 
-// ---------- Nền ----------
 function drawBackground(t) {
-  // tường đá
   const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0, '#2a1a10');
   g.addColorStop(1, '#150a05');
   ctx.fillStyle = g;
   ctx.fillRect(0,0,W,H);
-
-  // vân đá
   ctx.strokeStyle = 'rgba(80,50,30,0.3)';
   ctx.lineWidth = 1;
-  for (let y = 0; y < H; y += 40) {
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-  }
-  for (let x = 0; x < W; x += 60) {
-    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
-  }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
 
-  // ánh lửa lò rèn (góc trái dưới)
+  // 🆕 Cửa sổ ngục — dân làng đi qua phía trên
+  drawVillagerWindow(t);
+
   const fireG = ctx.createRadialGradient(120, 400, 20, 120, 400, 180);
   fireG.addColorStop(0, 'rgba(255,140,40,0.5)');
   fireG.addColorStop(1, 'rgba(255,60,0,0)');
   ctx.fillStyle = fireG;
   ctx.fillRect(0,200,350,340);
 
-  // nhấp nháy lửa
   const flick = Math.sin(t/80)*0.15 + 0.85;
   ctx.globalAlpha = flick;
   const fireG2 = ctx.createRadialGradient(120, 400, 5, 120, 400, 90);
@@ -330,200 +332,186 @@ function drawBackground(t) {
   ctx.globalAlpha = 1;
 }
 
-// ---------- Vẽ lò rèn ----------
+// 🆕 Cửa sổ nhỏ trên cao — bóng dân làng cúng vật
+function drawVillagerWindow(t) {
+  const wx = W - 180, wy = 60, ww = 120, wh = 70;
+  ctx.fillStyle = '#1a0e08';
+  ctx.fillRect(wx, wy, ww, wh);
+  // song sắt
+  ctx.strokeStyle = '#3a2a1a';
+  ctx.lineWidth = 3;
+  for (let i = 0; i <= 4; i++) {
+    ctx.beginPath(); ctx.moveTo(wx + i*ww/4, wy); ctx.lineTo(wx + i*ww/4, wy+wh); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(wx, wy+wh/2); ctx.lineTo(wx+ww, wy+wh/2); ctx.stroke();
+
+  // 🆕 bóng dân làng đi ngang (mỗi 4s)
+  const phase = (t/4000) % 1;
+  const vx = wx + phase * (ww + 40) - 20;
+  if (vx > wx - 20 && vx < wx + ww + 20) {
+    ctx.fillStyle = 'rgba(180,140,100,0.7)';
+    ctx.beginPath();
+    ctx.arc(vx, wy + wh - 25, 6, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillRect(vx-5, wy + wh - 20, 10, 15);
+  }
+  // chữ
+  ctx.fillStyle = '#7a5a3a';
+  ctx.font = '11px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('Dân làng', wx + ww/2, wy - 6);
+}
+
 function drawForge(t) {
   const fx = 70, fy = 360, fw = 100, fh = 90;
-
-  // thân lò
   ctx.fillStyle = '#3a2a1a';
   roundRect(fx, fy, fw, fh, 8); ctx.fill();
   ctx.strokeStyle = '#5a3a20'; ctx.lineWidth = 3;
   roundRect(fx, fy, fw, fh, 8); ctx.stroke();
-
-  // miệng lò (lửa)
   const flick = Math.sin(t/60)*8 + Math.sin(t/37)*4;
   ctx.fillStyle = '#1a0a00';
   roundRect(fx+15, fy+20, fw-30, fh-35, 6); ctx.fill();
-
   const fire = ctx.createRadialGradient(fx+fw/2, fy+50, 3, fx+fw/2, fy+50, 30+flick);
   fire.addColorStop(0, '#fff8c0');
   fire.addColorStop(0.4, '#ffaa30');
   fire.addColorStop(1, 'rgba(255,60,0,0)');
   ctx.fillStyle = fire;
   ctx.fillRect(fx+10, fy+10, fw-20, fh-15);
-
-  // than
   ctx.fillStyle = '#000';
-  for (let i=0;i<4;i++){
-    const px = fx+20+i*15, py = fy+fh-12;
-    ctx.fillRect(px, py, 8, 4);
-  }
-
-  // nhãn
+  for (let i=0;i<4;i++){ ctx.fillRect(fx+20+i*15, fy+fh-12, 8, 4); }
   ctx.fillStyle = '#ffaa44';
   ctx.font = 'bold 13px Segoe UI';
   ctx.textAlign = 'center';
   ctx.fillText('LÒ RÈN', fx+fw/2, fy-8);
 }
 
-// ---------- Vẽ đe ----------
 function drawAnvil(t) {
   const ax = 420, ay = 360;
   ctx.fillStyle = '#4a4a4a';
-  // đế
   ctx.fillRect(ax-40, ay+50, 80, 20);
-  // thân
   ctx.beginPath();
-  ctx.moveTo(ax-25, ay+50);
-  ctx.lineTo(ax-15, ay+10);
-  ctx.lineTo(ax+15, ay+10);
-  ctx.lineTo(ax+25, ay+50);
+  ctx.moveTo(ax-25, ay+50); ctx.lineTo(ax-15, ay+10);
+  ctx.lineTo(ax+15, ay+10); ctx.lineTo(ax+25, ay+50);
   ctx.closePath(); ctx.fill();
-  // mặt đe
   ctx.fillStyle = '#5a5a5a';
   ctx.beginPath();
-  ctx.moveTo(ax-45, ay+10);
-  ctx.lineTo(ax+45, ay+10);
-  ctx.lineTo(ax+35, ay-2);
-  ctx.lineTo(ax-35, ay-2);
+  ctx.moveTo(ax-45, ay+10); ctx.lineTo(ax+45, ay+10);
+  ctx.lineTo(ax+35, ay-2); ctx.lineTo(ax-35, ay-2);
   ctx.closePath(); ctx.fill();
-  // highlight
   ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(ax-40, ay+8); ctx.lineTo(ax+40, ay+8); ctx.stroke();
-
-  // kiếm trên đe
-  if (GS.currentSword) {
-    drawSwordIcon(ax, ay-30, GS.currentSword, 1.2);
-  }
-
+  if (GS.currentSword) drawSwordIcon(ax, ay-30, GS.currentSword, 1.2);
   ctx.fillStyle = '#888';
   ctx.font = 'bold 13px Segoe UI';
   ctx.textAlign = 'center';
   ctx.fillText('ĐE RÈN', ax, ay-70);
 }
 
-// ---------- Vẽ icon kiếm ----------
 function drawSwordIcon(cx, cy, sw, scaleF=1) {
   const tier = SWORD_TIERS[sw.tier];
   const s = scaleF;
   ctx.save();
   ctx.translate(cx, cy);
-
-  // lưỡi kiếm
   ctx.fillStyle = tier.color;
   ctx.beginPath();
-  ctx.moveTo(-4*s, 30*s);
-  ctx.lineTo(4*s, 30*s);
-  ctx.lineTo(3*s, -25*s);
-  ctx.lineTo(0, -35*s);
-  ctx.lineTo(-3*s, -25*s);
-  ctx.closePath();
-  ctx.fill();
-
-  // ánh sáng
+  ctx.moveTo(-4*s, 30*s); ctx.lineTo(4*s, 30*s);
+  ctx.lineTo(3*s, -25*s); ctx.lineTo(0, -35*s);
+  ctx.lineTo(-3*s, -25*s); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,0.5)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(-1*s, -20*s); ctx.lineTo(-1*s, 25*s); ctx.stroke();
-
-  // chuôi
-  ctx.fillStyle = '#6a4a20';
-  ctx.fillRect(-3*s, 30*s, 6*s, 12*s);
-  // bảo vệ
-  ctx.fillStyle = '#8a6a30';
-  ctx.fillRect(-9*s, 28*s, 18*s, 4*s);
-  // núm
+  ctx.fillStyle = '#6a4a20'; ctx.fillRect(-3*s, 30*s, 6*s, 12*s);
+  ctx.fillStyle = '#8a6a30'; ctx.fillRect(-9*s, 28*s, 18*s, 4*s);
   ctx.fillStyle = '#aa8a40';
   ctx.beginPath(); ctx.arc(0, 45*s, 3*s, 0, Math.PI*2); ctx.fill();
-
-  // vết nứt
   if (sw.cracked) {
     ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(-2*s, -10*s); ctx.lineTo(2*s, 0); ctx.lineTo(-1*s, 10*s);
-    ctx.stroke();
+    ctx.moveTo(-2*s, -10*s); ctx.lineTo(2*s, 0); ctx.lineTo(-1*s, 10*s); ctx.stroke();
   }
-
-  // hiệu ứng nung đỏ
   if (sw.heated) {
     ctx.globalAlpha = 0.4 + Math.sin(performance.now()/200)*0.2;
     ctx.fillStyle = '#ff4400';
     ctx.beginPath();
-    ctx.moveTo(-4*s, 30*s);
-    ctx.lineTo(4*s, 30*s);
-    ctx.lineTo(3*s, -25*s);
-    ctx.lineTo(0, -35*s);
-    ctx.lineTo(-3*s, -25*s);
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(-4*s, 30*s); ctx.lineTo(4*s, 30*s);
+    ctx.lineTo(3*s, -25*s); ctx.lineTo(0, -35*s);
+    ctx.lineTo(-3*s, -25*s); ctx.closePath(); ctx.fill();
     ctx.globalAlpha = 1;
   }
-
   ctx.restore();
 }
 
-// ---------- Vẽ HUD ----------
 function drawHUD() {
-  // panel trên trái
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  roundRect(10, 10, 300, 80, 10); ctx.fill();
+  // Panel trái
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  roundRect(10, 10, 320, 100, 10); ctx.fill();
 
   ctx.fillStyle = '#ffcc66';
-  ctx.font = 'bold 18px Segoe UI';
+  ctx.font = 'bold 17px Segoe UI';
   ctx.textAlign = 'left';
-  ctx.fillText(`☀️ Ngày ${GS.day}`, 25, 35);
+  ctx.fillText(`☀️ Ngày ${GS.day}/${MAX_DAY}`, 25, 34);
+
+  // ❤️ 3 mạng
+  ctx.font = 'bold 16px Segoe UI';
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i < GS.lives ? '#ff4466' : '#442222';
+    ctx.fillText('❤️', 25 + i*28, 60);
+  }
 
   ctx.fillStyle = '#88ddff';
-  ctx.font = 'bold 15px Segoe UI';
-  ctx.fillText(`🪙 Vàng: ${GS.gold}`, 25, 58);
-  ctx.fillText(`⭐ Điểm sống: ${GS.survivalScore}`, 25, 78);
+  ctx.font = 'bold 14px Segoe UI';
+  ctx.fillText(`🪙 ${GS.gold}   ⭐ ${GS.survivalScore}/${GS.requiredScore}`, 25, 84);
 
-  // panel trên phải
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  roundRect(W-300, 10, 290, 80, 10); ctx.fill();
+  // Panel phải
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  roundRect(W-300, 10, 290, 100, 10); ctx.fill();
 
   ctx.fillStyle = '#ffaa44';
-  ctx.font = 'bold 15px Segoe UI';
+  ctx.font = 'bold 14px Segoe UI';
   ctx.textAlign = 'right';
-  ctx.fillText(`🗡️ Kiếm trong đống: ${GS.swordsInPile}`, W-25, 35);
+  ctx.fillText(`🗡️ Đống: ${GS.swordsInPile}`, W-25, 34);
   ctx.fillStyle = '#ff8844';
-  ctx.fillText(`🔥 Than: ${GS.coal}`, W-25, 58);
+  ctx.fillText(`🔥 Than: ${GS.coal}`, W-25, 56);
   ctx.fillStyle = '#ff6666';
   ctx.fillText(`⚠️ Nguy cơ vỡ: ${GS.breakChance}%`, W-25, 78);
 
-  // kiếm hiện tại
+  // 🆕 Yêu cầu quái
+  ctx.fillStyle = '#ff8888';
+  ctx.font = 'bold 13px Segoe UI';
+  ctx.fillText(`🐉 Quái đòi: ${GS.requiredScore}`, W-25, 100);
+
+  // Kiếm hiện tại
   if (GS.currentSword) {
     const sw = GS.currentSword;
     const tier = SWORD_TIERS[sw.tier];
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    roundRect(W/2-140, 10, 280, 55, 10); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    roundRect(W/2-150, 10, 300, 55, 10); ctx.fill();
     ctx.fillStyle = tier.color;
     ctx.font = 'bold 16px Segoe UI';
     ctx.textAlign = 'center';
-    ctx.fillText(`${tier.name}`, W/2, 32);
+    ctx.fillText(tier.name, W/2, 32);
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 14px Segoe UI';
     ctx.fillText(`Giá trị: ${sw.value}  |  Đập: ${GS.hammerCount}`, W/2, 52);
   }
 }
 
-// ---------- Vẽ log ----------
 function drawLog() {
   const now = performance.now();
-  const startY = H - 110;
+  const startY = H - 120;
   ctx.textAlign = 'left';
   ctx.font = '13px Segoe UI';
   GS.log.forEach((l, i) => {
     const age = now - l.t;
-    if (age > 5000) return;
-    const alpha = age > 4000 ? 1 - (age-4000)/1000 : 1;
+    if (age > 6000) return;
+    const alpha = age > 5000 ? 1 - (age-5000)/1000 : 1;
     ctx.globalAlpha = alpha;
     ctx.fillStyle = l.color;
-    ctx.fillText(l.msg, 25, startY + i*16);
+    ctx.fillText(l.msg, 25, startY + i*15);
   });
   ctx.globalAlpha = 1;
 }
 
-// ---------- Vẽ nút ----------
 function drawButtons() {
   buttons.length = 0;
   const bw = 130, bh = 55, gap = 12;
@@ -537,35 +525,39 @@ function drawButtons() {
   drawButton(startX + (bw+gap)*4, y, bw, bh, '🌙 KẾT THÚC', '#5a3a6a', endDay, GS.phase === 'night');
 }
 
-// ---------- Vẽ game over ----------
 function drawEndScreen() {
-  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillStyle = 'rgba(0,0,0,0.9)';
   ctx.fillRect(0,0,W,H);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   if (GS.won) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 48px Segoe UI';
-    ctx.fillText('🏆 CHIẾN THẮNG!', W/2, H/2 - 60);
+    ctx.font = 'bold 46px Segoe UI';
+    ctx.fillText('🏆 CHIẾN THẮNG!', W/2, H/2 - 100);
     ctx.fillStyle = '#fff';
     ctx.font = '22px Segoe UI';
-    ctx.fillText('Bạn đã rèn đủ kiếm thần và phá cửa trốn thoát!', W/2, H/2);
-    ctx.fillText(`Ngày: ${GS.day}  |  Vàng: ${GS.gold}  |  Điểm: ${GS.survivalScore}`, W/2, H/2 + 40);
+    ctx.fillText('Bạn đã sống sót 100 ngày trong ngục tối!', W/2, H/2 - 50);
+    ctx.fillStyle = '#ffcc66';
+    ctx.font = '20px Segoe UI';
+    ctx.fillText(`Ngày: ${GS.day-1}  |  Vàng: ${GS.gold}  |  Kiếm rèn: ${GS.totalForged}`, W/2, H/2);
+    ctx.fillText(`Mạng còn: ${GS.lives}/3`, W/2, H/2 + 35);
   } else {
     ctx.fillStyle = '#ff3333';
-    ctx.font = 'bold 48px Segoe UI';
-    ctx.fillText('💀 GAME OVER', W/2, H/2 - 60);
+    ctx.font = 'bold 46px Segoe UI';
+    ctx.fillText('💀 GAME OVER', W/2, H/2 - 100);
     ctx.fillStyle = '#fff';
     ctx.font = '22px Segoe UI';
-    ctx.fillText('Quái vật đã ăn thịt bạn...', W/2, H/2);
-    ctx.fillText(`Sống được: ${GS.day} ngày  |  Điểm: ${GS.survivalScore}`, W/2, H/2 + 40);
+    ctx.fillText('Quái vật đã ăn thịt bạn...', W/2, H/2 - 50);
+    ctx.fillStyle = '#ffaa66';
+    ctx.font = '20px Segoe UI';
+    ctx.fillText(`Sống được: ${GS.day} ngày  |  Tổng điểm: ${GS.survivalScore}`, W/2, H/2);
+    ctx.fillText(`Kiếm rèn: ${GS.totalForged}`, W/2, H/2 + 35);
   }
 
-  drawButton(W/2 - 100, H/2 + 120, 200, 60, '🔄 CHƠI LẠI', '#4a7a4a', resetGame);
+  drawButton(W/2 - 100, H/2 + 110, 200, 60, '🔄 CHƠI LẠI', '#4a7a4a', resetGame);
 }
 
-// ---------- Reset ----------
 function resetGame() {
   GS.day = 1;
   GS.gold = 0;
@@ -575,43 +567,33 @@ function resetGame() {
   GS.hammerCount = 0;
   GS.breakChance = 0;
   GS.coal = 5;
+  GS.lives = 3;
+  GS.requiredScore = 0;
+  GS.tributeFromVillagers = 0;
   GS.log = [];
   GS.gameOver = false;
   GS.won = false;
   GS.phase = 'day';
+  GS.totalForged = 0;
   startDay();
 }
 
-// ---------- Vòng lặp chính ----------
 let lastT = 0;
 function loop(t) {
   requestAnimationFrame(loop);
-
   drawBackground(t);
   drawForge(t);
   drawAnvil(t);
   drawHUD();
   drawLog();
-
-  if (GS.gameOver || GS.won) {
-    drawEndScreen();
-  } else {
-    drawButtons();
-  }
-
-  // hiệu ứng bụi lửa
-  if (Math.random() < 0.3) {
-    // (tùy chọn) thêm particle
-  }
+  if (GS.gameOver || GS.won) drawEndScreen();
+  else drawButtons();
 }
 
-// ---------- Touch / Click ----------
 function handleTap(px, py) {
-  // chuyển tọa độ canvas → logic
   const rect = cv.getBoundingClientRect();
   const x = (px - rect.left) / scale;
   const y = (py - rect.top) / scale;
-
   for (let i = buttons.length - 1; i >= 0; i--) {
     const b = buttons[i];
     if (x >= b.x && x <= b.x+b.w && y >= b.y && y <= b.y+b.h) {
@@ -626,12 +608,8 @@ cv.addEventListener('touchstart', e => {
   const t = e.touches[0];
   handleTap(t.clientX, t.clientY);
 }, { passive: false });
+cv.addEventListener('mousedown', e => handleTap(e.clientX, e.clientY));
 
-cv.addEventListener('mousedown', e => {
-  handleTap(e.clientX, e.clientY);
-});
-
-// ---------- Khóa landscape (nếu hỗ trợ) ----------
 function tryLockLandscape() {
   if (screen.orientation && screen.orientation.lock) {
     screen.orientation.lock('landscape').catch(()=>{});
@@ -639,7 +617,6 @@ function tryLockLandscape() {
 }
 document.addEventListener('click', tryLockLandscape, { once: true });
 
-// ---------- Khởi động ----------
 resize();
 resetGame();
 requestAnimationFrame(loop);
